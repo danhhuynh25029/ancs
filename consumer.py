@@ -1,4 +1,5 @@
 from kafka import KafkaConsumer
+import json
 
 consumer = KafkaConsumer(
   bootstrap_servers=["localhost:19092"],
@@ -10,13 +11,21 @@ consumer = KafkaConsumer(
 
 consumer.subscribe("dbz.shops.orders")
 
+
 try:
     for message in consumer:
-        topic_info = f"topic: {message.partition}|{message.offset})"
-        # message_info = f"key: {message.key}, {message.value}"
-        # print(f"{topic_info}, {message_info}")
-        print(f"{topic_info}")
+        topic_info = f"topic: {message.partition}|{message.offset}"
+        message_info = f"key: {message.value}"
+        try:
+            final_dict = json.loads(message.value) 
+            print(final_dict['payload']['after'])
+        
+        except Exception as e:
+            print("Invalid JSON syntax:", e)
+            continue
 except Exception as e:
     print(f"Error occurred while consuming messages: {e}")
 finally:
     consumer.close()
+
+

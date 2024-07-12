@@ -63,3 +63,37 @@ services:
     depends_on: [mysql, redpanda]
     ports:
       - 8083:8083
+  redpanda-ui:
+      image: docker.redpanda.com/redpandadata/console:v2.3.8
+      restart: on-failure
+      entrypoint: /bin/sh
+      command: -c "echo \"$$CONSOLE_CONFIG_FILE\" > /tmp/config.yml; /app/console"
+      environment:
+        CONFIG_FILEPATH: /tmp/config.yml
+        CONSOLE_CONFIG_FILE: |
+          kafka:
+            brokers: ["redpanda:9092"]
+            schemaRegistry:
+              enabled: true
+              urls: ["http://redpanda:8081"]
+          connect:
+            enabled: true
+            clusters:
+              - name: datagen
+                url: http://connect:8083
+      ports:
+        - "8080:8080"
+      depends_on:
+        - redpanda
+  ch_server:
+    image: yandex/clickhouse-server
+    ports:
+      - "8123:8123"
+    volumes:
+      - ./db:/var/lib/clickhouse
+  ch_client:
+    image: yandex/clickhouse-client
+    entrypoint:
+      - /bin/sleep
+    command:
+      - infinity
